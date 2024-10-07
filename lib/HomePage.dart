@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -9,21 +10,47 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int counter = 0;
+
+  Future<int> getCounterValue() async {
+    SharedPreferences pref = await SharedPreferences.getInstance();
+    return pref.getInt('counterValue') ?? 0; // Default to 0 if null
+  }
+
+  Future<void> setCounterValue() async {
+    SharedPreferences pref = await SharedPreferences.getInstance();
+    await pref.setInt('counterValue', counter);
+  }
+
   void countNo() {
     setState(() {
       counter++;
+      setCounterValue();
     });
   }
 
-  void reset() {
+  @override
+  void initState() {
+    super.initState();
+    checkForCounterValue();
+  }
+
+  Future<void> checkForCounterValue() async {
+    counter = await getCounterValue();
+    setState(() {}); // Refresh UI
+  }
+
+  void reset() async {
     setState(() {
       counter = 0;
     });
+    SharedPreferences pref = await SharedPreferences.getInstance();
+    await pref.remove('counterValue'); // Clear stored value
   }
 
   void decrease() {
     setState(() {
       counter--;
+      setCounterValue();
     });
   }
 
@@ -51,12 +78,13 @@ class _HomePageState extends State<HomePage> {
                   style: ElevatedButton.styleFrom(
                     textStyle: const TextStyle(fontSize: 20),
                   ),
-                  child: const Text("increase"),
+                  child: const Text("Increase"),
                 ),
-                ElevatedButton(onPressed: reset, child: Text("Reset")),
-                ElevatedButton(onPressed: decrease, child: Text("decrease"))
+                ElevatedButton(onPressed: reset, child: const Text("Reset")),
+                ElevatedButton(
+                    onPressed: decrease, child: const Text("Decrease")),
               ],
-            )
+            ),
           ],
         ),
       ),
